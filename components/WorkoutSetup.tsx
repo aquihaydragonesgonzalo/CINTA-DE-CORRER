@@ -1,8 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Session, Segment } from '../types';
 import { MIN_SEGMENTS, MAX_SPEED, MAX_INCLINE } from '../constants';
-import { Trash2, Plus, Play, ChevronLeft, Clock, Zap } from 'lucide-react';
+import { calculateSessionStats } from '../services/statsService';
+import { Trash2, Plus, Play, ChevronLeft, Clock, Zap, Flame } from 'lucide-react';
 
 interface WorkoutSetupProps {
   session: Session;
@@ -47,7 +48,7 @@ const NumericInput = ({
   };
 
   // Sincronizar si el valor cambia externamente (ej: al cargar sesión)
-  React.useEffect(() => {
+  useEffect(() => {
     setDisplayValue(value === 0 && displayValue === '' ? '' : value.toString());
   }, [value]);
 
@@ -60,7 +61,7 @@ const NumericInput = ({
         value={displayValue}
         onChange={handleChange}
         placeholder={placeholder}
-        className="bg-slate-900 text-white p-2 rounded border border-slate-700 focus:border-emerald-500 outline-none w-full text-center"
+        className="bg-slate-900 text-white p-2 rounded border border-slate-700 focus:border-emerald-500 outline-none w-full text-center font-mono"
       />
     </div>
   );
@@ -111,6 +112,7 @@ export const WorkoutSetup: React.FC<WorkoutSetupProps> = ({ session, onStart, on
     setEditedSession({ ...editedSession, segments: newSegments });
   };
 
+  const stats = calculateSessionStats(editedSession.segments);
   const totalTime = editedSession.segments.reduce((acc, s) => acc + s.duration, 0);
   const totalMins = Math.floor(totalTime / 60);
   const totalSecs = totalTime % 60;
@@ -122,18 +124,33 @@ export const WorkoutSetup: React.FC<WorkoutSetupProps> = ({ session, onStart, on
         <h1 className="text-2xl font-bold text-white">Configurar Sesión</h1>
       </div>
 
-      <div className="bg-slate-800 p-4 rounded-2xl mb-6 border border-slate-700">
+      <div className="bg-slate-800 p-5 rounded-2xl mb-6 border border-slate-700 shadow-xl">
         <div className="flex justify-between items-center mb-2">
-           <h2 className="text-lg font-bold text-emerald-400">{editedSession.name}</h2>
-           <span className="bg-slate-700 text-xs px-2 py-1 rounded text-slate-300">Min 5 Tramos</span>
+           <h2 className="text-lg font-bold text-white">{editedSession.name}</h2>
+           <span className="bg-emerald-500/10 text-emerald-500 text-[10px] font-black uppercase px-2 py-1 rounded border border-emerald-500/20">
+             {editedSession.segments.length} Tramos
+           </span>
         </div>
-        <p className="text-sm text-slate-400 mb-4">{editedSession.description}</p>
-        <div className="flex gap-4 text-sm font-medium text-slate-300">
-           <div className="flex items-center gap-1">
-             <Clock size={16} /> {totalMins}m {totalSecs > 0 ? `${totalSecs}s` : ''}
+        
+        <div className="grid grid-cols-3 gap-2 mt-4">
+           <div className="bg-slate-900/50 p-2 rounded-xl flex flex-col items-center border border-slate-700/50">
+             <Clock size={14} className="text-slate-500 mb-1" />
+             <span className="text-sm font-bold text-white">{totalMins}m {totalSecs}s</span>
+             <span className="text-[9px] uppercase font-bold text-slate-500">Tiempo</span>
            </div>
-           <div className="flex items-center gap-1">
-             <Zap size={16} /> {editedSession.segments.length} tramos
+           <div className="bg-slate-900/50 p-2 rounded-xl flex flex-col items-center border border-slate-700/50">
+             <Zap size={14} className="text-orange-400 mb-1" />
+             <span className="text-sm font-bold text-white">~{stats.calories}</span>
+             <span className="text-[9px] uppercase font-bold text-slate-500">Kcal Est.</span>
+           </div>
+           <div className="bg-slate-900/50 p-2 rounded-xl flex flex-col items-center border border-slate-700/50">
+             <div className="flex gap-0.5 mb-1">
+               {[1,2,3,4,5].map(i => (
+                 <Flame key={i} size={10} className={i <= stats.fatBurnLevel ? 'text-orange-500 fill-orange-500' : 'text-slate-700'} />
+               ))}
+             </div>
+             <span className="text-sm font-bold text-white">{stats.fatBurnLevel}/5</span>
+             <span className="text-[9px] uppercase font-bold text-slate-500">Quema G.</span>
            </div>
         </div>
       </div>
@@ -144,7 +161,7 @@ export const WorkoutSetup: React.FC<WorkoutSetupProps> = ({ session, onStart, on
           const s = segment.duration % 60;
 
           return (
-            <div key={segment.id} className="bg-slate-800/50 p-4 rounded-xl border border-slate-700 flex flex-col gap-4">
+            <div key={segment.id} className="bg-slate-800/50 p-4 rounded-xl border border-slate-700 flex flex-col gap-4 transition-all hover:bg-slate-800">
                <div className="flex justify-between items-center">
                   <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Tramo {index + 1}</span>
                   <button 
