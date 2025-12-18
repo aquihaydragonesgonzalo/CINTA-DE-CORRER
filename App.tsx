@@ -12,14 +12,13 @@ const App: React.FC = () => {
   const [view, setView] = useState<ViewState>('HOME');
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
 
-  // Importante: En móviles, el AudioContext debe iniciarse tras un clic del usuario
   const startInteraction = () => {
     audioService.resume();
   };
 
   const handleStartSetup = (session: Session) => {
     startInteraction();
-    setSelectedSession(session);
+    setSelectedSession(JSON.parse(JSON.stringify(session)));
     setView('SETUP');
   };
 
@@ -124,7 +123,6 @@ const App: React.FC = () => {
              </button>
           </section>
 
-          {/* Bottom Navigation Simulated */}
           <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-slate-800/80 backdrop-blur-lg border-t border-slate-700 flex justify-around items-center h-20 px-4 rounded-t-3xl shadow-2xl">
             <button className="flex flex-col items-center gap-1 text-emerald-400">
               <Dumbbell size={24} />

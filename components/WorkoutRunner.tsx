@@ -4,13 +4,51 @@ import { Session, Segment } from '../types.ts';
 import { TimerDisplay } from './TimerDisplay.tsx';
 import { audioService } from '../services/audioService.ts';
 import { Play, Pause, SkipForward, Square, ChevronRight } from 'lucide-react';
-import { LineChart, Line, ResponsiveContainer, ReferenceArea } from 'recharts';
 
 interface WorkoutRunnerProps {
   session: Session;
   onFinish: () => void;
   onCancel: () => void;
 }
+
+// Gráfico SVG nativo ultraligero
+const TrainingProfile = ({ segments, currentIndex }: { segments: Segment[], currentIndex: number }) => {
+  const maxVal = 15;
+  const height = 40;
+  const width = 100;
+  const step = width / segments.length;
+
+  return (
+    <div className="h-24 mt-8 bg-slate-800/30 rounded-xl overflow-hidden relative border border-slate-700/50">
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full" preserveAspectRatio="none">
+        {/* Velocidad */}
+        <path
+          d={`M 0 ${height} ${segments.map((s, i) => `L ${i * step} ${height - (s.speed / maxVal) * height} L ${(i + 1) * step} ${height - (s.speed / maxVal) * height}`).join(' ')} L ${width} ${height} Z`}
+          fill="rgba(59, 130, 246, 0.2)"
+          stroke="#3b82f6"
+          strokeWidth="0.5"
+        />
+        {/* Inclinación */}
+        <path
+          d={`M 0 ${height} ${segments.map((s, i) => `L ${i * step} ${height - (s.incline / maxVal) * height} L ${(i + 1) * step} ${height - (s.incline / maxVal) * height}`).join(' ')} L ${width} ${height} Z`}
+          fill="rgba(249, 115, 22, 0.1)"
+          stroke="#f97316"
+          strokeWidth="0.5"
+          strokeDasharray="1,1"
+        />
+        {/* Cursor de progreso */}
+        <rect 
+          x={currentIndex * step} 
+          y="0" 
+          width={step} 
+          height={height} 
+          fill="rgba(255,255,255,0.1)"
+          className="animate-pulse"
+        />
+      </svg>
+    </div>
+  );
+};
 
 export const WorkoutRunner: React.FC<WorkoutRunnerProps> = ({ session, onFinish, onCancel }) => {
   const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
@@ -19,7 +57,7 @@ export const WorkoutRunner: React.FC<WorkoutRunnerProps> = ({ session, onFinish,
   const [totalSecondsElapsed, setTotalSecondsElapsed] = useState(0);
 
   const totalDuration = session.segments.reduce((acc, s) => acc + s.duration, 0);
-  const totalSecondsLeft = totalDuration - totalSecondsElapsed;
+  const totalSecondsLeft = Math.max(0, totalDuration - totalSecondsElapsed);
   
   const currentSegment = session.segments[currentSegmentIndex];
   const nextSegment = session.segments[currentSegmentIndex + 1];
@@ -71,12 +109,6 @@ export const WorkoutRunner: React.FC<WorkoutRunnerProps> = ({ session, onFinish,
     }
   };
 
-  const chartData = session.segments.map((s, idx) => ({
-    name: `T${idx + 1}`,
-    speed: s.speed,
-    incline: s.incline,
-  }));
-
   return (
     <div className={`fixed inset-0 z-50 transition-colors duration-300 ${isAlarming ? 'bg-red-900/40' : 'bg-slate-900'}`}>
       <div className="flex flex-col h-full max-w-md mx-auto p-6">
@@ -95,9 +127,9 @@ export const WorkoutRunner: React.FC<WorkoutRunnerProps> = ({ session, onFinish,
           <TimerDisplay seconds={totalSecondsLeft} label="Tiempo Total Restante" size="sm" color="text-emerald-400" />
         </div>
 
-        <div className={`relative flex flex-col items-center justify-center p-12 rounded-3xl border-4 transition-all duration-300 ${isAlarming ? 'border-red-500 shadow-[0_0_30px_rgba(239,68,68,0.5)]' : 'border-slate-700 bg-slate-800/50'}`}>
+        <div className={`relative flex flex-col items-center justify-center p-12 rounded-3xl border-4 transition-all duration-300 ${isAlarming ? 'border-red-500 shadow-[0_0_30px_rgba(239,68,68,0.5)] bg-red-500/10' : 'border-slate-700 bg-slate-800/50'}`}>
            <TimerDisplay seconds={segmentSecondsLeft} label="Siguiente Tramo en..." />
-           {isAlarming && <div className="absolute top-2 animate-pulse text-red-500 font-bold uppercase tracking-widest">¡ATENCIÓN!</div>}
+           {isAlarming && <div className="absolute top-2 animate-pulse text-red-500 font-bold uppercase tracking-widest text-[10px]">¡ATENCIÓN! CAMBIO</div>}
         </div>
 
         <div className="grid grid-cols-2 gap-4 mt-8">
@@ -111,24 +143,16 @@ export const WorkoutRunner: React.FC<WorkoutRunnerProps> = ({ session, onFinish,
           </div>
         </div>
 
-        <div className="h-24 mt-8 bg-slate-800/30 rounded-xl overflow-hidden">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
-              <Line type="stepAfter" dataKey="speed" stroke="#60a5fa" strokeWidth={3} dot={false} />
-              <Line type="stepAfter" dataKey="incline" stroke="#fb923c" strokeWidth={3} dot={false} />
-              <ReferenceArea x1={`T${currentSegmentIndex + 1}`} x2={`T${currentSegmentIndex + 1}`} fill="rgba(255,255,255,0.1)" />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        <TrainingProfile segments={session.segments} currentIndex={currentSegmentIndex} />
 
         <div className="mt-4 p-4 bg-slate-800/50 rounded-xl border border-dashed border-slate-700 flex items-center justify-between">
            <div className="flex flex-col">
               <span className="text-xs text-slate-500 uppercase font-bold">Siguiente</span>
               <span className="text-sm text-slate-300">
-                {nextSegment ? `${nextSegment.speed} km/h | ${nextSegment.incline}% | ${Math.floor(nextSegment.duration/60)}m` : '¡Enfriamiento Final!'}
+                {nextSegment ? `${nextSegment.speed} km/h | ${nextSegment.incline}%` : '¡Enfriamiento Final!'}
               </span>
            </div>
-           <ChevronRight className="text-slate-600" />
+           <ChevronRight className="text-slate-600" size={16} />
         </div>
 
         <div className="mt-auto flex justify-center gap-8 py-6">

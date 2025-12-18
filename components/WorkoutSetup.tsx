@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { Session, Segment } from '../types';
-import { MIN_SEGMENTS, MAX_SPEED, MAX_INCLINE } from '../constants';
-import { calculateSessionStats } from '../services/statsService';
+import { Session, Segment } from '../types.ts';
+import { MIN_SEGMENTS, MAX_SPEED, MAX_INCLINE } from '../constants.ts';
+import { calculateSessionStats } from '../services/statsService.ts';
 import { Trash2, Plus, Play, ChevronLeft, Clock, Zap, Flame } from 'lucide-react';
 
 interface WorkoutSetupProps {
@@ -11,7 +11,6 @@ interface WorkoutSetupProps {
   onBack: () => void;
 }
 
-// Componente de Input optimizado para permitir borrado total
 const NumericInput = ({ 
   value, 
   onChange, 
@@ -33,7 +32,7 @@ const NumericInput = ({
     const val = e.target.value;
     setDisplayValue(val);
     if (val === '') {
-      onChange(0); // Internamente es 0, pero visualmente está vacío
+      onChange(0);
     } else {
       const num = parseFloat(val);
       if (!isNaN(num)) {
@@ -47,7 +46,6 @@ const NumericInput = ({
     }
   };
 
-  // Sincronizar si el valor cambia externamente (ej: al cargar sesión)
   useEffect(() => {
     setDisplayValue(value === 0 && displayValue === '' ? '' : value.toString());
   }, [value]);
@@ -161,7 +159,7 @@ export const WorkoutSetup: React.FC<WorkoutSetupProps> = ({ session, onStart, on
           const s = segment.duration % 60;
 
           return (
-            <div key={segment.id} className="bg-slate-800/50 p-4 rounded-xl border border-slate-700 flex flex-col gap-4 transition-all hover:bg-slate-800">
+            <div key={segment.id} className="bg-slate-800/50 p-4 rounded-xl border border-slate-700 flex flex-col gap-4">
                <div className="flex justify-between items-center">
                   <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Tramo {index + 1}</span>
                   <button 
@@ -174,48 +172,24 @@ export const WorkoutSetup: React.FC<WorkoutSetupProps> = ({ session, onStart, on
                </div>
                
                <div className="grid grid-cols-4 gap-2">
-                  <NumericInput 
-                    label="Min"
-                    value={m}
-                    onChange={(val) => handleTimeChange(index, 'm', val)}
-                  />
-                  <NumericInput 
-                    label="Seg"
-                    value={s}
-                    max={59}
-                    onChange={(val) => handleTimeChange(index, 's', val)}
-                  />
-                  <NumericInput 
-                    label="Km/h"
-                    value={segment.speed}
-                    max={MAX_SPEED}
-                    step="0.1"
-                    onChange={(val) => updateSegment(index, { speed: typeof val === 'string' ? 0 : val })}
-                  />
-                  <NumericInput 
-                    label="% Inc"
-                    value={segment.incline}
-                    max={MAX_INCLINE}
-                    onChange={(val) => updateSegment(index, { incline: typeof val === 'string' ? 0 : val })}
-                  />
+                  <NumericInput label="Min" value={m} onChange={(val) => handleTimeChange(index, 'm', val)} />
+                  <NumericInput label="Seg" value={s} max={59} onChange={(val) => handleTimeChange(index, 's', val)} />
+                  <NumericInput label="Km/h" value={segment.speed} max={MAX_SPEED} step="0.1" onChange={(val) => updateSegment(index, { speed: typeof val === 'string' ? 0 : val })} />
+                  <NumericInput label="% Inc" value={segment.incline} max={MAX_INCLINE} onChange={(val) => updateSegment(index, { incline: typeof val === 'string' ? 0 : val })} />
                </div>
             </div>
           );
         })}
       </div>
 
-      <button 
-        onClick={addSegment}
-        className="mt-6 w-full py-4 border-2 border-dashed border-slate-700 rounded-xl text-slate-500 font-bold flex items-center justify-center gap-2 hover:bg-slate-800 hover:text-slate-300 transition-colors"
-      >
+      <button onClick={addSegment} className="mt-6 w-full py-4 border-2 border-dashed border-slate-700 rounded-xl text-slate-500 font-bold flex items-center justify-center gap-2">
         <Plus size={20} /> Añadir Tramo
       </button>
 
-      {/* Floating Action Bar */}
       <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-slate-900 via-slate-900 to-transparent">
         <button 
           onClick={() => onStart(editedSession)}
-          className="w-full bg-emerald-500 text-slate-900 py-4 rounded-2xl font-black text-lg flex items-center justify-center gap-3 shadow-xl shadow-emerald-500/20 active:scale-95 transition-transform"
+          className="w-full bg-emerald-500 text-slate-900 py-4 rounded-2xl font-black text-lg flex items-center justify-center gap-3 shadow-xl active:scale-95 transition-transform"
         >
           <Play size={24} fill="currentColor" /> INICIAR ACTIVIDAD
         </button>
