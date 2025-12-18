@@ -12,18 +12,18 @@ const App: React.FC = () => {
   const [view, setView] = useState<ViewState>('HOME');
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
 
-  const startInteraction = () => {
-    audioService.resume().catch(console.error);
+  const startAudio = () => {
+    audioService.resume().catch(() => {});
   };
 
   const handleStartSetup = (session: Session) => {
-    startInteraction();
+    startAudio();
     setSelectedSession(JSON.parse(JSON.stringify(session)));
     setView('SETUP');
   };
 
   const handleCreateCustom = () => {
-    startInteraction();
+    startAudio();
     const custom: Session = {
       id: `custom-${Date.now()}`,
       name: 'Sesión Personalizada',
@@ -41,7 +41,7 @@ const App: React.FC = () => {
   };
 
   const handleStartActive = (session: Session) => {
-    startInteraction();
+    startAudio();
     setSelectedSession(session);
     setView('ACTIVE');
   };
@@ -65,7 +65,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 font-sans selection:bg-emerald-500 selection:text-white" onClick={startInteraction}>
+    <div className="min-h-screen bg-slate-900 text-slate-100 font-sans" onClick={startAudio}>
       
       {view === 'HOME' && (
         <div className="max-w-md mx-auto p-6 pb-24">
@@ -86,57 +86,49 @@ const App: React.FC = () => {
                   <button 
                     key={session.id}
                     onClick={() => handleStartSetup(session)}
-                    className="bg-slate-800 p-5 rounded-2xl border border-slate-700 flex items-center justify-between text-left hover:bg-slate-750 transition-colors active:scale-[0.98] group"
+                    className="bg-slate-800 p-5 rounded-2xl border border-slate-700 flex items-center justify-between text-left active:scale-[0.98] transition-transform group"
                   >
                     <div className="flex-1">
                       <div className="flex justify-between items-start mb-1">
-                        <h3 className="text-lg font-bold text-white group-hover:text-emerald-400 transition-colors">{session.name}</h3>
-                        <div className="flex flex-col items-end">
-                           <span className="text-xs font-bold text-orange-400 flex items-center gap-1">
-                             <Zap size={10} className="fill-orange-400" /> {stats.calories} kcal
-                           </span>
-                           <FatBurnIndicator level={stats.fatBurnLevel} />
-                        </div>
+                        <h3 className="text-lg font-bold text-white group-active:text-emerald-400">{session.name}</h3>
                       </div>
-                      <p className="text-sm text-slate-400 line-clamp-1 mb-2">{session.description}</p>
-                      <div className="flex gap-3 text-xs font-bold text-slate-500">
-                        <span className="bg-slate-900/50 px-2 py-0.5 rounded border border-slate-700/50">{session.segments.length} TRAMOS</span>
-                        <span className="bg-slate-900/50 px-2 py-0.5 rounded border border-slate-700/50">{Math.floor(session.segments.reduce((acc, s) => acc + s.duration, 0) / 60)} MIN</span>
+                      <p className="text-sm text-slate-400 mb-3 line-clamp-2">{session.description}</p>
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1">
+                          <Zap size={14} className="text-emerald-400" />
+                          <span className="text-xs font-bold">{stats.calories} kcal</span>
+                        </div>
+                        <FatBurnIndicator level={stats.fatBurnLevel} />
                       </div>
                     </div>
-                    <ChevronRight className="ml-4 text-slate-600 group-hover:text-emerald-400 shrink-0" />
+                    <ChevronRight className="text-slate-600 group-active:text-emerald-400" size={20} />
                   </button>
                 );
               })}
             </div>
           </section>
 
-          <section className="mt-8">
-             <button 
+          <section className="mb-8">
+            <h2 className="text-xs font-black uppercase tracking-widest text-slate-500 mb-4">Personalizado</h2>
+            <button 
               onClick={handleCreateCustom}
-              className="w-full bg-slate-800/30 border-2 border-dashed border-slate-700 p-6 rounded-2xl flex flex-col items-center justify-center gap-3 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all text-slate-400 hover:text-emerald-400"
-             >
-                <div className="bg-slate-800 p-3 rounded-full border border-slate-700">
-                  <Plus size={24} />
-                </div>
-                <span className="font-bold">Nueva Sesión Personalizada</span>
-             </button>
+              className="w-full bg-slate-800 p-5 rounded-2xl border-2 border-dashed border-slate-700 flex items-center justify-center gap-3 text-slate-400 hover:text-emerald-400 hover:border-emerald-400/50 transition-colors"
+            >
+              <Plus size={24} />
+              <span className="font-bold">Nueva Sesión Personalizada</span>
+            </button>
           </section>
 
-          <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-slate-800/80 backdrop-blur-lg border-t border-slate-700 flex justify-around items-center h-20 px-4 rounded-t-3xl shadow-2xl">
-            <button className="flex flex-col items-center gap-1 text-emerald-400">
-              <Dumbbell size={24} />
-              <span className="text-[10px] font-bold uppercase">Entrenar</span>
-            </button>
-            <button className="flex flex-col items-center gap-1 text-slate-500">
-              <History size={24} />
-              <span className="text-[10px] font-bold uppercase">Historial</span>
-            </button>
-            <button className="flex flex-col items-center gap-1 text-slate-500">
-              <Trophy size={24} />
-              <span className="text-[10px] font-bold uppercase">Metas</span>
-            </button>
-          </nav>
+          <div className="flex gap-4 opacity-50">
+             <div className="flex-1 bg-slate-800/50 p-4 rounded-xl flex flex-col items-center">
+                <Trophy size={20} className="mb-1" />
+                <span className="text-[10px] font-bold uppercase">Logros</span>
+             </div>
+             <div className="flex-1 bg-slate-800/50 p-4 rounded-xl flex flex-col items-center">
+                <History size={20} className="mb-1" />
+                <span className="text-[10px] font-bold uppercase">Historial</span>
+             </div>
+          </div>
         </div>
       )}
 
@@ -157,31 +149,37 @@ const App: React.FC = () => {
       )}
 
       {view === 'SUMMARY' && selectedSession && (
-        <div className="fixed inset-0 bg-slate-900 z-[100] flex items-center justify-center p-6">
-           <div className="bg-slate-800 p-8 rounded-3xl border border-slate-700 max-w-sm w-full text-center shadow-2xl">
-              <div className="w-20 h-20 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Trophy size={40} />
-              </div>
-              <h2 className="text-3xl font-black text-white mb-2">¡SESIÓN COMPLETADA!</h2>
-              <div className="flex flex-col gap-2 mb-8">
-                <p className="text-slate-400">Has completado todos los tramos con éxito.</p>
-                <div className="bg-slate-900/50 p-4 rounded-2xl border border-slate-700 mt-2">
-                   <span className="text-3xl font-black text-emerald-400">{calculateSessionStats(selectedSession.segments).calories}</span>
-                   <span className="text-sm text-slate-500 block font-bold uppercase">Kilocalorías Quemadas</span>
-                </div>
-              </div>
-              <button 
-                onClick={() => setView('HOME')}
-                className="w-full bg-emerald-500 text-slate-900 py-4 rounded-2xl font-black text-lg shadow-lg shadow-emerald-500/20 active:scale-95 transition-transform"
-              >
-                VOLVER AL INICIO
-              </button>
-           </div>
+        <div className="max-w-md mx-auto p-8 flex flex-col items-center justify-center min-h-screen text-center">
+          <div className="w-24 h-24 bg-emerald-500 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-emerald-500/20">
+            <Trophy size={48} className="text-slate-900" />
+          </div>
+          <h1 className="text-3xl font-black mb-2">¡SESIÓN COMPLETADA!</h1>
+          <p className="text-slate-400 mb-8">Has terminado el entrenamiento "{selectedSession.name}".</p>
+          
+          <div className="grid grid-cols-2 gap-4 w-full mb-10">
+            <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+              <span className="text-[10px] uppercase font-bold text-slate-500 block mb-1">Calorías Est.</span>
+              <span className="text-3xl font-black text-emerald-400">{calculateSessionStats(selectedSession.segments).calories}</span>
+            </div>
+            <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+              <span className="text-[10px] uppercase font-bold text-slate-500 block mb-1">Tiempo Total</span>
+              <span className="text-3xl font-black text-blue-400">
+                {Math.floor(selectedSession.segments.reduce((acc, s) => acc + s.duration, 0) / 60)}m
+              </span>
+            </div>
+          </div>
+
+          <button 
+            onClick={() => setView('HOME')}
+            className="w-full bg-slate-100 text-slate-900 py-4 rounded-2xl font-black text-lg shadow-xl"
+          >
+            VOLVER AL INICIO
+          </button>
         </div>
       )}
-
     </div>
   );
 };
 
+// Fix for index.tsx error: adding default export
 export default App;
