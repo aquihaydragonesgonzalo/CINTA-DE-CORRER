@@ -8,9 +8,17 @@ class AudioService {
     }
   }
 
+  // Los navegadores móviles requieren llamar a resume() dentro de un evento de usuario
+  async resume() {
+    this.init();
+    if (this.context && this.context.state === 'suspended') {
+      await this.context.resume();
+    }
+  }
+
   beep(frequency: number = 880, duration: number = 200) {
     this.init();
-    if (!this.context) return;
+    if (!this.context || this.context.state === 'suspended') return;
 
     const oscillator = this.context.createOscillator();
     const gainNode = this.context.createGain();

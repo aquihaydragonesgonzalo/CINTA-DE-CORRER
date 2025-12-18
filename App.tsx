@@ -1,22 +1,30 @@
 
 import React, { useState } from 'react';
-import { ViewState, Session } from './types';
-import { DEFAULT_SESSIONS, MIN_SEGMENTS } from './constants';
-import { WorkoutSetup } from './components/WorkoutSetup';
-import { WorkoutRunner } from './components/WorkoutRunner';
-import { calculateSessionStats } from './services/statsService';
+import { ViewState, Session } from './types.ts';
+import { DEFAULT_SESSIONS, MIN_SEGMENTS } from './constants.ts';
+import { WorkoutSetup } from './components/WorkoutSetup.tsx';
+import { WorkoutRunner } from './components/WorkoutRunner.tsx';
+import { calculateSessionStats } from './services/statsService.ts';
+import { audioService } from './services/audioService.ts';
 import { Dumbbell, Plus, ChevronRight, Trophy, History, Activity, Flame, Zap } from 'lucide-react';
 
 const App: React.FC = () => {
   const [view, setView] = useState<ViewState>('HOME');
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
 
+  // Importante: En móviles, el AudioContext debe iniciarse tras un clic del usuario
+  const startInteraction = () => {
+    audioService.resume();
+  };
+
   const handleStartSetup = (session: Session) => {
+    startInteraction();
     setSelectedSession(session);
     setView('SETUP');
   };
 
   const handleCreateCustom = () => {
+    startInteraction();
     const custom: Session = {
       id: `custom-${Date.now()}`,
       name: 'Sesión Personalizada',
@@ -34,6 +42,7 @@ const App: React.FC = () => {
   };
 
   const handleStartActive = (session: Session) => {
+    startInteraction();
     setSelectedSession(session);
     setView('ACTIVE');
   };
@@ -57,7 +66,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 font-sans selection:bg-emerald-500 selection:text-white">
+    <div className="min-h-screen bg-slate-900 text-slate-100 font-sans selection:bg-emerald-500 selection:text-white" onClick={startInteraction}>
       
       {view === 'HOME' && (
         <div className="max-w-md mx-auto p-6 pb-24">

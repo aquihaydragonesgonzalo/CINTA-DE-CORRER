@@ -1,10 +1,10 @@
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Session, Segment } from '../types';
-import { TimerDisplay } from './TimerDisplay';
-import { audioService } from '../services/audioService';
+import React, { useState, useEffect } from 'react';
+import { Session, Segment } from '../types.ts';
+import { TimerDisplay } from './TimerDisplay.tsx';
+import { audioService } from '../services/audioService.ts';
 import { Play, Pause, SkipForward, Square, ChevronRight } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, ReferenceArea } from 'recharts';
+import { LineChart, Line, ResponsiveContainer, ReferenceArea } from 'recharts';
 
 interface WorkoutRunnerProps {
   session: Session;
@@ -24,7 +24,6 @@ export const WorkoutRunner: React.FC<WorkoutRunnerProps> = ({ session, onFinish,
   const currentSegment = session.segments[currentSegmentIndex];
   const nextSegment = session.segments[currentSegmentIndex + 1];
 
-  // For visual alarm
   const isAlarming = segmentSecondsLeft <= 5 && segmentSecondsLeft > 0;
 
   useEffect(() => {
@@ -33,21 +32,18 @@ export const WorkoutRunner: React.FC<WorkoutRunnerProps> = ({ session, onFinish,
       interval = setInterval(() => {
         setSegmentSecondsLeft((prev) => {
           if (prev <= 1) {
-            // Segment finished
             if (currentSegmentIndex < session.segments.length - 1) {
               const nextIdx = currentSegmentIndex + 1;
               setCurrentSegmentIndex(nextIdx);
               audioService.playSegmentEndBeep();
               return session.segments[nextIdx].duration;
             } else {
-              // Workout finished
               setIsActive(false);
               onFinish();
               return 0;
             }
           }
           
-          // Sound alarm at 5, 4, 3, 2, 1 seconds
           if (prev <= 6 && prev > 1) {
              audioService.playCountdownBeep();
           }
@@ -75,7 +71,6 @@ export const WorkoutRunner: React.FC<WorkoutRunnerProps> = ({ session, onFinish,
     }
   };
 
-  // Prepare chart data
   const chartData = session.segments.map((s, idx) => ({
     name: `T${idx + 1}`,
     speed: s.speed,
@@ -86,7 +81,6 @@ export const WorkoutRunner: React.FC<WorkoutRunnerProps> = ({ session, onFinish,
     <div className={`fixed inset-0 z-50 transition-colors duration-300 ${isAlarming ? 'bg-red-900/40' : 'bg-slate-900'}`}>
       <div className="flex flex-col h-full max-w-md mx-auto p-6">
         
-        {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
             <h2 className="text-xl font-bold text-white">{session.name}</h2>
@@ -97,18 +91,15 @@ export const WorkoutRunner: React.FC<WorkoutRunnerProps> = ({ session, onFinish,
           </button>
         </div>
 
-        {/* Global Timer */}
         <div className="mb-10">
           <TimerDisplay seconds={totalSecondsLeft} label="Tiempo Total Restante" size="sm" color="text-emerald-400" />
         </div>
 
-        {/* Current Segment Timer */}
         <div className={`relative flex flex-col items-center justify-center p-12 rounded-3xl border-4 transition-all duration-300 ${isAlarming ? 'border-red-500 shadow-[0_0_30px_rgba(239,68,68,0.5)]' : 'border-slate-700 bg-slate-800/50'}`}>
            <TimerDisplay seconds={segmentSecondsLeft} label="Siguiente Tramo en..." />
            {isAlarming && <div className="absolute top-2 animate-pulse text-red-500 font-bold uppercase tracking-widest">¡ATENCIÓN!</div>}
         </div>
 
-        {/* Active Stats */}
         <div className="grid grid-cols-2 gap-4 mt-8">
           <div className="bg-slate-800 p-4 rounded-2xl border border-slate-700 flex flex-col items-center">
              <span className="text-xs text-slate-400 uppercase font-bold">Velocidad</span>
@@ -120,7 +111,6 @@ export const WorkoutRunner: React.FC<WorkoutRunnerProps> = ({ session, onFinish,
           </div>
         </div>
 
-        {/* Chart Visualization */}
         <div className="h-24 mt-8 bg-slate-800/30 rounded-xl overflow-hidden">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData}>
@@ -131,7 +121,6 @@ export const WorkoutRunner: React.FC<WorkoutRunnerProps> = ({ session, onFinish,
           </ResponsiveContainer>
         </div>
 
-        {/* Next Segment Info */}
         <div className="mt-4 p-4 bg-slate-800/50 rounded-xl border border-dashed border-slate-700 flex items-center justify-between">
            <div className="flex flex-col">
               <span className="text-xs text-slate-500 uppercase font-bold">Siguiente</span>
@@ -142,7 +131,6 @@ export const WorkoutRunner: React.FC<WorkoutRunnerProps> = ({ session, onFinish,
            <ChevronRight className="text-slate-600" />
         </div>
 
-        {/* Footer Controls */}
         <div className="mt-auto flex justify-center gap-8 py-6">
           <button 
             onClick={togglePause}
