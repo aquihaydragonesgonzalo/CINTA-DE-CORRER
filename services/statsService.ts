@@ -1,5 +1,5 @@
 
-import { Segment } from '../types';
+import { Segment } from '../types.ts';
 
 /**
  * Calcula una estimación de calorías quemadas basada en velocidad, inclinación y tiempo.
@@ -21,16 +21,12 @@ export const calculateSessionStats = (segments: Segment[]) => {
     const kcal = mets * weightKg * durationHours;
     
     totalCalories += kcal;
-    // La intensidad para quema grasas suele estar en zonas de 60-70% FCM. 
-    // Aquí usamos una métrica de "esfuerzo" combinando inclinación y velocidad.
     intensitySum += (s.speed * 0.6 + s.incline * 0.4) * (s.duration / 60);
   });
 
   const totalMinutes = segments.reduce((acc, s) => acc + s.duration, 0) / 60;
-  const avgIntensity = intensitySum / totalMinutes;
+  const avgIntensity = intensitySum / (totalMinutes || 1);
 
-  // Nivel quema grasas de 1 a 5
-  // Un HIIT potente quema muchas kcal pero un cardio moderado-alto es óptimo "quema grasas"
   let fatBurnLevel = 1;
   if (avgIntensity > 8) fatBurnLevel = 5;
   else if (avgIntensity > 6) fatBurnLevel = 4;

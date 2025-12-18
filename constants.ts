@@ -1,5 +1,5 @@
 
-import { Session } from './types';
+import { Session } from './types.ts';
 
 export const MIN_SEGMENTS = 5;
 export const MAX_SPEED = 15;

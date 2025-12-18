@@ -13,7 +13,7 @@ const App: React.FC = () => {
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
 
   const startInteraction = () => {
-    audioService.resume();
+    audioService.resume().catch(console.error);
   };
 
   const handleStartSetup = (session: Session) => {
