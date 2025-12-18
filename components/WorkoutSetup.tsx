@@ -1,0 +1,208 @@
+
+import React, { useState } from 'react';
+import { Session, Segment } from '../types';
+import { MIN_SEGMENTS, MAX_SPEED, MAX_INCLINE } from '../constants';
+import { Trash2, Plus, Play, ChevronLeft, Clock, Zap } from 'lucide-react';
+
+interface WorkoutSetupProps {
+  session: Session;
+  onStart: (session: Session) => void;
+  onBack: () => void;
+}
+
+// Componente de Input optimizado para permitir borrado total
+const NumericInput = ({ 
+  value, 
+  onChange, 
+  label, 
+  max, 
+  step = "1",
+  placeholder = "0"
+}: { 
+  value: number, 
+  onChange: (val: number | string) => void, 
+  label: string, 
+  max?: number,
+  step?: string,
+  placeholder?: string
+}) => {
+  const [displayValue, setDisplayValue] = useState<string>(value.toString());
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setDisplayValue(val);
+    if (val === '') {
+      onChange(0); // Internamente es 0, pero visualmente está vacío
+    } else {
+      const num = parseFloat(val);
+      if (!isNaN(num)) {
+        if (max !== undefined && num > max) {
+          onChange(max);
+          setDisplayValue(max.toString());
+        } else {
+          onChange(num);
+        }
+      }
+    }
+  };
+
+  // Sincronizar si el valor cambia externamente (ej: al cargar sesión)
+  React.useEffect(() => {
+    setDisplayValue(value === 0 && displayValue === '' ? '' : value.toString());
+  }, [value]);
+
+  return (
+    <div className="flex flex-col">
+      <label className="text-[10px] uppercase text-slate-500 font-bold mb-1">{label}</label>
+      <input 
+        type="number" 
+        step={step}
+        value={displayValue}
+        onChange={handleChange}
+        placeholder={placeholder}
+        className="bg-slate-900 text-white p-2 rounded border border-slate-700 focus:border-emerald-500 outline-none w-full text-center"
+      />
+    </div>
+  );
+};
+
+export const WorkoutSetup: React.FC<WorkoutSetupProps> = ({ session, onStart, onBack }) => {
+  const [editedSession, setEditedSession] = useState<Session>({
+    ...session,
+    segments: [...session.segments]
+  });
+
+  const updateSegment = (index: number, updates: Partial<Segment>) => {
+    const newSegments = [...editedSession.segments];
+    newSegments[index] = { ...newSegments[index], ...updates };
+    setEditedSession({ ...editedSession, segments: newSegments });
+  };
+
+  const handleTimeChange = (index: number, type: 'm' | 's', val: number | string) => {
+    const segment = editedSession.segments[index];
+    const numericVal = typeof val === 'string' ? 0 : val;
+    
+    let m = Math.floor(segment.duration / 60);
+    let s = segment.duration % 60;
+
+    if (type === 'm') m = numericVal;
+    if (type === 's') s = Math.min(59, numericVal);
+
+    updateSegment(index, { duration: (m * 60) + s });
+  };
+
+  const addSegment = () => {
+    const lastSegment = editedSession.segments[editedSession.segments.length - 1];
+    const newSegment: Segment = {
+      id: Date.now().toString(),
+      duration: lastSegment?.duration || 60,
+      speed: lastSegment?.speed || 5,
+      incline: lastSegment?.incline || 0,
+    };
+    setEditedSession({
+      ...editedSession,
+      segments: [...editedSession.segments, newSegment]
+    });
+  };
+
+  const removeSegment = (index: number) => {
+    if (editedSession.segments.length <= MIN_SEGMENTS) return;
+    const newSegments = editedSession.segments.filter((_, i) => i !== index);
+    setEditedSession({ ...editedSession, segments: newSegments });
+  };
+
+  const totalTime = editedSession.segments.reduce((acc, s) => acc + s.duration, 0);
+  const totalMins = Math.floor(totalTime / 60);
+  const totalSecs = totalTime % 60;
+
+  return (
+    <div className="flex flex-col h-full bg-slate-900 p-6 pb-32 overflow-y-auto">
+      <div className="flex items-center gap-4 mb-6">
+        <button onClick={onBack} className="p-2 text-slate-400 hover:text-white"><ChevronLeft size={24} /></button>
+        <h1 className="text-2xl font-bold text-white">Configurar Sesión</h1>
+      </div>
+
+      <div className="bg-slate-800 p-4 rounded-2xl mb-6 border border-slate-700">
+        <div className="flex justify-between items-center mb-2">
+           <h2 className="text-lg font-bold text-emerald-400">{editedSession.name}</h2>
+           <span className="bg-slate-700 text-xs px-2 py-1 rounded text-slate-300">Min 5 Tramos</span>
+        </div>
+        <p className="text-sm text-slate-400 mb-4">{editedSession.description}</p>
+        <div className="flex gap-4 text-sm font-medium text-slate-300">
+           <div className="flex items-center gap-1">
+             <Clock size={16} /> {totalMins}m {totalSecs > 0 ? `${totalSecs}s` : ''}
+           </div>
+           <div className="flex items-center gap-1">
+             <Zap size={16} /> {editedSession.segments.length} tramos
+           </div>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        {editedSession.segments.map((segment, index) => {
+          const m = Math.floor(segment.duration / 60);
+          const s = segment.duration % 60;
+
+          return (
+            <div key={segment.id} className="bg-slate-800/50 p-4 rounded-xl border border-slate-700 flex flex-col gap-4">
+               <div className="flex justify-between items-center">
+                  <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Tramo {index + 1}</span>
+                  <button 
+                    onClick={() => removeSegment(index)}
+                    disabled={editedSession.segments.length <= MIN_SEGMENTS}
+                    className="text-slate-600 hover:text-red-400 disabled:opacity-30 p-1"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+               </div>
+               
+               <div className="grid grid-cols-4 gap-2">
+                  <NumericInput 
+                    label="Min"
+                    value={m}
+                    onChange={(val) => handleTimeChange(index, 'm', val)}
+                  />
+                  <NumericInput 
+                    label="Seg"
+                    value={s}
+                    max={59}
+                    onChange={(val) => handleTimeChange(index, 's', val)}
+                  />
+                  <NumericInput 
+                    label="Km/h"
+                    value={segment.speed}
+                    max={MAX_SPEED}
+                    step="0.1"
+                    onChange={(val) => updateSegment(index, { speed: typeof val === 'string' ? 0 : val })}
+                  />
+                  <NumericInput 
+                    label="% Inc"
+                    value={segment.incline}
+                    max={MAX_INCLINE}
+                    onChange={(val) => updateSegment(index, { incline: typeof val === 'string' ? 0 : val })}
+                  />
+               </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <button 
+        onClick={addSegment}
+        className="mt-6 w-full py-4 border-2 border-dashed border-slate-700 rounded-xl text-slate-500 font-bold flex items-center justify-center gap-2 hover:bg-slate-800 hover:text-slate-300 transition-colors"
+      >
+        <Plus size={20} /> Añadir Tramo
+      </button>
+
+      {/* Floating Action Bar */}
+      <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-slate-900 via-slate-900 to-transparent">
+        <button 
+          onClick={() => onStart(editedSession)}
+          className="w-full bg-emerald-500 text-slate-900 py-4 rounded-2xl font-black text-lg flex items-center justify-center gap-3 shadow-xl shadow-emerald-500/20 active:scale-95 transition-transform"
+        >
+          <Play size={24} fill="currentColor" /> INICIAR ACTIVIDAD
+        </button>
+      </div>
+    </div>
+  );
+};

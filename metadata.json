@@ -1,0 +1,7 @@
+{
+  "name": "Treadmill Pro Manager",
+  "description": "A professional PWA for managing treadmill sessions with speed, incline, and precise interval timers.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
